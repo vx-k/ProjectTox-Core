@@ -72,15 +72,16 @@ unsigned char *hex_string_to_bin(char hex_string[]);
  **********************************************************/
 
 #define MEMBER_OFFSET(var_name_in_parent, parent_type) \
-   (&(((parent_type*)0)->var_name_in_parent))
+    (&(((parent_type*)0)->var_name_in_parent))
 
 #define GET_PARENT(var, var_name_in_parent, parent_type) \
-   ((parent_type*)((uint64_t)(&(var)) - (uint64_t)(MEMBER_OFFSET(var_name_in_parent, parent_type))))
+    ((parent_type*)((uint64_t)(&(var)) - (uint64_t)(MEMBER_OFFSET(var_name_in_parent, parent_type))))
 
-#define TOX_LIST_FOR_EACH(lst, tmp_name) \
-   for (tox_list* tmp_name = lst.next; tmp_name != &lst; tmp_name = tmp_name->next)
-
-#define TOX_LIST_GET_VALUE(tmp_name, name_in_parent, parent_type) GET_PARENT(tmp_name, name_in_parent, parent_type)
+#define tox_list_for_each(lst, lst_name_in_tmp, tmp_type, tmp_name) \
+    tox_list * _tox_list_ ## tmp_name = lst.next; tmp_type *tmp_name = GET_PARENT(lst, lst_name_in_tmp, tmp_type); \
+    for (; _tox_list_ ## tmp_name != &lst; \
+         _tox_list_ ## tmp_name = _tox_list_ ## tmp_name ->next, \
+         tmp_name = GET_PARENT(_tox_list_ ## tmp_name, lst_name_in_tmp, tmp_type))
 
 typedef struct tox_list {
     struct tox_list *prev, *next;
@@ -159,7 +160,6 @@ static inline void tox_array_pop(tox_array *arr, uint32_t num)
 
 /* TODO: return ptr and do not take type */
 #define tox_array_get(arr, i, type) (((type*)(arr)->data)[i])
-
 
 #define tox_array_for_each(arr, type, tmp_name) \
     type *tmp_name = &tox_array_get(arr, 0, type); uint32_t tmp_name ## _i = 0; \
