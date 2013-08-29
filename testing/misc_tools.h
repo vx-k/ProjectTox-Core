@@ -68,7 +68,6 @@ unsigned char *hex_string_to_bin(char hex_string[]);
 
 /************************Linked List***********************
  * http://wiki.tox.im/index.php/Internal_functions_and_data_structures#Linked_List
- * TODO: Update wiki.
  **********************************************************/
 
 #define MEMBER_OFFSET(member_name_in_parent, parent_type) \
@@ -80,7 +79,7 @@ unsigned char *hex_string_to_bin(char hex_string[]);
 
 /* tox_list_for_each*(lst, lst_name, tmp, tmp_type) { stuff_to_do_with_the_list(tmp); }
     Macro for performing an action on each element of tox_list.
-    You should not use this macro unless the list contains at least 1 element.
+    *WARNING* You should not use this macro unless the list contains at least 1 element.
 parameters:
     lst        pointer to an instance of tox_list structure
     lst_name   name of lst inside the main data structure (see wiki)
@@ -139,7 +138,7 @@ static inline void tox_list_remove(tox_list *lst)
  ************************************************************/
 
 typedef struct tox_array {
-    uint8_t *data; /* last elem is data[len-1] */
+    uint8_t *data;
     uint32_t len;
     size_t elem_size; /* in bytes */
 } tox_array;
@@ -157,14 +156,12 @@ static inline void tox_array_delete(tox_array *arr)
     arr->len = arr->elem_size = 0;
 }
 
-static inline uint8_t tox_array_push_ptr(tox_array *arr, uint8_t *item)
+static inline void tox_array_push_ptr(tox_array *arr, uint8_t *item)
 {
     arr->data = realloc(arr->data, arr->elem_size * (arr->len+1));
     if (item != NULL)
         memcpy(arr->data + arr->elem_size*arr->len, item, arr->elem_size);
     arr->len++;
-
-    return 1;
 }
 #define tox_array_push(arr, item) tox_array_push_ptr(arr, (uint8_t*)(&(item)))
 
