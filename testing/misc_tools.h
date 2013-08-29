@@ -71,32 +71,52 @@ unsigned char *hex_string_to_bin(char hex_string[]);
  * TODO: Update wiki.
  **********************************************************/
 
-#define MEMBER_OFFSET(var_name_in_parent, parent_type) \
-    (&(((parent_type*)0)->var_name_in_parent))
+#define MEMBER_OFFSET(member_name_in_parent, parent_type) \
+    (&(((parent_type*)0)->member_name_in_parent))
 
-#define GET_PARENT(var, var_name_in_parent, parent_type) \
-    ((parent_type*)((uint64_t)(&(var)) - (uint64_t)(MEMBER_OFFSET(var_name_in_parent, parent_type))))
+/* Get a pointer to parent of X. X has to be a member of data structure parent_type. */
+#define GET_PARENT(X, name_of_X_in_parent, parent_type) \
+    ((parent_type*)((uint64_t)(&(X)) - (uint64_t)(MEMBER_OFFSET(name_of_X_in_parent, parent_type))))
 
-#define tox_list_for_each(lst, lst_name_in_tmp, tmp_type, tmp_name) \
-    tox_list * _tox_list_ ## tmp_name = lst.next; tmp_type *tmp_name = GET_PARENT(lst, lst_name_in_tmp, tmp_type); \
-    for (; _tox_list_ ## tmp_name != &lst; \
-         _tox_list_ ## tmp_name = _tox_list_ ## tmp_name ->next, \
-         tmp_name = GET_PARENT(_tox_list_ ## tmp_name, lst_name_in_tmp, tmp_type))
+/* tox_list_for_each*(lst, lst_name, tmp, tmp_type) { stuff_to_do_with_the_list(tmp); }
+    Macro for performing an action on each element of tox_list.
+    You should not use this macro unless the list contains at least 1 element.
+parameters:
+    lst        pointer to an instance of tox_list structure
+    lst_name   name of lst inside the main data structure (see wiki)
+    tmp        name of a pointer which is used to iterate the list
+    tmp_type   type of data which tmp points to
+*/
+#define tox_list_for_each(lst, lst_name, tmp, tmp_type) \
+    tox_list* __tox_ ## tmp = (lst)->prev; /* don't touch __tox_tmp */ \
+    tmp_type* tmp = GET_PARENT(*(__tox_ ## tmp), lst_name, tmp_type); \
+    for (; __tox_ ## tmp != (lst); \
+         __tox_ ## tmp = __tox_ ## tmp ->prev, \
+         tmp = GET_PARENT(*(__tox_ ## tmp), lst_name, tmp_type))
+
+#define tox_list_for_each_reverse(lst, lst_name, tmp, tmp_type) \
+    tox_list* __tox_ ## tmp = (lst)->next; /* don't touch __tox_tmp */ \
+    tmp_type* tmp = GET_PARENT(*(__tox_ ## tmp), lst_name, tmp_type); \
+    for (; __tox_ ## tmp != (lst); \
+         __tox_ ## tmp = __tox_ ## tmp ->next, \
+         tmp = GET_PARENT(*(__tox_ ## tmp), lst_name, tmp_type))
 
 typedef struct tox_list {
     struct tox_list *prev, *next;
 } tox_list;
 
-/* Returns a new tox_list_t. */
-static inline void tox_list_new(tox_list *lst)
+/* Initializes a new list. */
+static inline void tox_list_init(tox_list *lst)
 {
     lst->prev = lst->next = lst;
 }
 
-/* Inserts a new tox_lst after lst and returns it. */
+/* Inserts a new tox_lst after lst.
+ * lst is a head of a list, and new_lst is data to add.
+ */
 static inline void tox_list_add(tox_list *lst, tox_list *new_lst)
 {
-    tox_list_new(new_lst);
+    tox_list_init(new_lst);
 
     new_lst->next = lst->next;
     new_lst->next->prev = new_lst;
@@ -105,6 +125,7 @@ static inline void tox_list_add(tox_list *lst, tox_list *new_lst)
     new_lst->prev = lst;
 }
 
+/* Remove 1 element from a list. */
 static inline void tox_list_remove(tox_list *lst)
 {
     lst->prev->next = lst->next;
@@ -166,3 +187,4 @@ static inline void tox_array_pop(tox_array *arr, uint32_t num)
     for (; tmp_name ## _i < (arr)->len; tmp_name = &tox_array_get(arr, ++ tmp_name ## _i, type))
 
 #endif // MISC_TOOLS_H
+
