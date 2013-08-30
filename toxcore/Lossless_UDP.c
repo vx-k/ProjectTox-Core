@@ -97,7 +97,8 @@ int new_connection(Lossless_UDP *ludp, IP_Port ip_port)
 
     if (connection_id != -1)
         return connection_id;
-
+   
+    //vx-k connection_id = tox_array_add(&ludp->connections, 0, 0);
     tox_array_for_each(&ludp->connections, Connection, tmp) {
         if (tmp->status == 0) {
             connection_id = tmp_i;
@@ -106,7 +107,7 @@ int new_connection(Lossless_UDP *ludp, IP_Port ip_port)
     }
 
     if (connection_id == -1) {
-        tox_array_push_ptr(&ludp->connections, 0); /* TODO: check return value */
+        tox_array_push_ptr(&ludp->connections, 0);
         connection_id = ludp->connections.len-1;
     }
     Connection* connection = &tox_array_get(&ludp->connections, connection_id, Connection);

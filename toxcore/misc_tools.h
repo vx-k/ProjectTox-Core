@@ -57,7 +57,7 @@ unsigned char *hex_string_to_bin(char hex_string[]);
 /************************Linked List***********************
  * http://wiki.tox.im/index.php/Internal_functions_and_data_structures#Linked_List
  * TODO:
- *    -Add a tox_array_for(range).
+ *    -Add a tox_list_for(range).
  *    -Add auto_test.
  **********************************************************/
 
@@ -129,9 +129,11 @@ static inline void tox_list_remove(tox_list *lst)
  *    -Add autotests.
  *    -Add a tox_array_reverse() macro.
  *    -Add wiki info usage.
- *    -Add a function pointer to check if space is empty.
- *    -Add a function tox_array_add(); similar to push, but
- *     uses isEmpty to check for empties and returns place of new element.
+ *       -Add a function pointer to check if space is empty.
+ *       -Add a function tox_array_add(); similar to push, but
+ *             uses isEmpty to check for empties and returns place of
+               new element.
+ *       -Add a function tox_array_shrink_to_fit() 
  *    -tox_array_push_ptr should be able to add several elements at a time.
  *    -Add sorting algorithms (use qsort from stdlib?)
  *    -Add a tox_array_for(range).
@@ -144,6 +146,7 @@ typedef struct tox_array {
     uint32_t len;
     size_t elem_size; /* in bytes */
     bool (*isElemEmpty)(uint8_t*);
+    int8_t (*compare)(const void*, const void*);
 } tox_array;
 
 static inline void tox_array_init(tox_array *arr, size_t elem_size, bool (*isEmpty)(uint8_t*))
@@ -164,6 +167,8 @@ static inline void tox_array_delete(tox_array *arr)
 /* Only adds members at the end. Guaranteed to append item. */
 static inline void tox_array_push_ptr(tox_array *arr, uint8_t *item, uint32_t num)
 {
+    if (num == 0)
+        num = 1;
     arr->data = realloc(arr->data, arr->elem_size * (arr->len+1));
     if (item != NULL)
         memcpy(arr->data + arr->elem_size*arr->len, item, arr->elem_size);
