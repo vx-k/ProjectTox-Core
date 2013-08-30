@@ -55,6 +55,8 @@ unsigned char *hex_string_to_bin(char hex_string[]);
 
 /************************Linked List***********************
  * http://wiki.tox.im/index.php/Internal_functions_and_data_structures#Linked_List
+ * TODO:
+ *    -Add a tox_array_for(range).
  **********************************************************/
 
 #define MEMBER_OFFSET(member_name_in_parent, parent_type) \
@@ -118,36 +120,46 @@ static inline void tox_list_remove(tox_list *lst)
     lst->next->prev = lst->prev;
 }
 
-/****************************Array***************************
+/**********************************Array*********************************
  * Array which manages its own memory allocation.
  * It stores copy of data (not pointers).
  * TODO:
+ *    -Add a tox_array_reverse() macro.
  *    -Add wiki info usage.
- *    -tox_array_push_ptr should be able to add several elements at a time.
- *    -Add sorting algorithms.
  *    -Add a function pointer to check if space is empty.
- ************************************************************/
+ *    -Add a function tox_array_add(); similar to push, but
+ *     uses isEmpty to check for empties and returns place of new element.
+ *    -tox_array_push_ptr should be able to add several elements at a time.
+ *    -Add sorting algorithms (use qsort from stdlib?)
+ *    -Add a tox_array_for(range).
+ *    -uint8_t* or void* for storing data (?)
+ *    -make tox_array_get() return ptr instead of element (?)
+ ************************************************************************/
 
 typedef struct tox_array {
     uint8_t *data;
     uint32_t len;
     size_t elem_size; /* in bytes */
+    bool (*isElemEmpty)(uint8_t*);
 } tox_array;
 
-static inline void tox_array_init(tox_array *arr, size_t elem_size)
+static inline void tox_array_init(tox_array *arr, size_t elem_size, bool (*isEmpty)(uint8_t*))
 {
+    arr->data = NULL;
     arr->len = 0;
     arr->elem_size = elem_size;
-    arr->data = NULL;
+    arr->isEmpty = isEmpty;
 }
 
 static inline void tox_array_delete(tox_array *arr)
 {
     free(arr->data);
     arr->len = arr->elem_size = 0;
+    arr->isEmpty = NULL;
 }
 
-static inline void tox_array_push_ptr(tox_array *arr, uint8_t *item)
+/* Only adds members at the end. Guaranteed to append item. */
+static inline void tox_array_push_ptr(tox_array *arr, uint8_t *item, uint32_t num)
 {
     arr->data = realloc(arr->data, arr->elem_size * (arr->len+1));
     if (item != NULL)
