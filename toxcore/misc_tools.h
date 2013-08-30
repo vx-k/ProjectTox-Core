@@ -2,23 +2,10 @@
  *
  * Miscellaneous functions and data structures for doing random things.
  *
- *  Copyright (C) 2013 Tox project All Rights Reserved.
- *
- *  This file is part of Tox.
- *
- *  Tox is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Tox is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Tox.  If not, see <http://www.gnu.org/licenses/>.
- *
+ *  This file is in public domain. Note that this does not apply to the rest 
+ *  of Tox project, which is licensed under GPLv3.
+ *  When modifying this file, please explicitly mention that you release your
+ *  modifications into public domain.
  */
 
 #ifndef MISC_TOOLS_H
@@ -134,7 +121,11 @@ static inline void tox_list_remove(tox_list *lst)
 /****************************Array***************************
  * Array which manages its own memory allocation.
  * It stores copy of data (not pointers).
- * TODO: Add wiki info usage.
+ * TODO:
+ *    -Add wiki info usage.
+ *    -tox_array_push_ptr should be able to add several elements at a time.
+ *    -Add sorting algorithms.
+ *    -Add a function pointer to check if space is empty.
  ************************************************************/
 
 typedef struct tox_array {
