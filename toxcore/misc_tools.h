@@ -19,44 +19,46 @@ unsigned char *hex_string_to_bin(char hex_string[]);
 
 /*********************Debugging Macros********************
  * wiki.tox.im/index.php/Internal_functions_and_data_structures#Debugging
+ * TODO:
+ *    -Add function return value encoding.
+ *    -Add a wiki page for error codes.
  *********************************************************/
 #ifdef DEBUG
     #include <assert.h>
     #include <stdio.h>
     #include <string.h>
 
-    #define DEBUG_PRINT(str, ...) do { \
+    #define _TOX_DEBUG_PRINT(str, ...) do { \
         char msg[1000]; \
         sprintf(msg, "%s(): line %d (file %s): %s%%c\n", __FUNCTION__, __LINE__, __FILE__, str); \
         fprintf(stderr, msg, __VA_ARGS__); \
     } while (0)
 
-    #define WARNING(...) do { \
+    #define TOX_WARNING(...) do { \
         fprintf(stderr, "warning in "); \
-        DEBUG_PRINT(__VA_ARGS__, ' '); \
+        _TOX_DEBUG_PRINT(__VA_ARGS__, ' '); \
     } while (0)
 
-    #define INFO(...) do { \
-        DEBUG_PRINT(__VA_ARGS__, ' '); \
+    #define TOX_INFO(...) do { \
+        _TOX_DEBUG_PRINT(__VA_ARGS__, ' '); \
     } while (0)
 
-    #undef ERROR
-    #define ERROR(exit_status, ...) do { \
+    #define TOX_ERROR(exit_status, ...) do { \
         fprintf(stderr, "error in "); \
-        DEBUG_PRINT(__VA_ARGS__, ' '); \
+        _TOX_DEBUG_PRINT(__VA_ARGS__, ' '); \
         exit(exit_status); \
     } while (0)
 #else
-    #define WARNING(...)
-    #define INFO(...)
-    #undef ERROR
-    #define ERROR(...)
+    #define TOX_WARNING(...)
+    #define TOX_INFO(...)
+    #define TOX_ERROR(...)
 #endif // DEBUG
 
 /************************Linked List***********************
  * http://wiki.tox.im/index.php/Internal_functions_and_data_structures#Linked_List
  * TODO:
  *    -Add a tox_array_for(range).
+ *    -Add auto_test.
  **********************************************************/
 
 #define MEMBER_OFFSET(member_name_in_parent, parent_type) \
@@ -124,6 +126,7 @@ static inline void tox_list_remove(tox_list *lst)
  * Array which manages its own memory allocation.
  * It stores copy of data (not pointers).
  * TODO:
+ *    -Add autotests.
  *    -Add a tox_array_reverse() macro.
  *    -Add wiki info usage.
  *    -Add a function pointer to check if space is empty.
