@@ -30,7 +30,7 @@
 //#include "../core/network.h"
 #include "../toxcore/DHT.h"
 #include "../toxcore/friend_requests.h"
-#include "../toxcore/misc_tools.h"
+#include "misc_tools.c"
 
 #include <string.h>
 
@@ -54,19 +54,21 @@ void print_clientlist(DHT *dht)
     IP_Port p_ip;
     printf("___________________CLOSE________________________________\n");
 
-    for (i = 0; i < 32; i++) {
+    for (i = 0; i < LCLIENT_LIST; i++) {
         printf("ClientID: ");
 
-        for (j = 0; j < 32; j++) {
+        for (j = 0; j < CLIENT_ID_SIZE; j++) {
             printf("%02hhX", dht->close_clientlist[i].client_id[j]);
         }
 
         p_ip = dht->close_clientlist[i].ip_port;
-        printf("\nIP: %u.%u.%u.%u Port: %u", p_ip.ip.c[0], p_ip.ip.c[1], p_ip.ip.c[2], p_ip.ip.c[3], ntohs(p_ip.port));
+        printf("\nIP: %u.%u.%u.%u Port: %u", p_ip.ip.uint8[0], p_ip.ip.uint8[1], p_ip.ip.uint8[2], p_ip.ip.uint8[3],
+               ntohs(p_ip.port));
         printf("\nTimestamp: %llu", (long long unsigned int) dht->close_clientlist[i].timestamp);
         printf("\nLast pinged: %llu\n", (long long unsigned int) dht->close_clientlist[i].last_pinged);
         p_ip = dht->close_clientlist[i].ret_ip_port;
-        printf("OUR IP: %u.%u.%u.%u Port: %u\n", p_ip.ip.c[0], p_ip.ip.c[1], p_ip.ip.c[2], p_ip.ip.c[3], ntohs(p_ip.port));
+        printf("OUR IP: %u.%u.%u.%u Port: %u\n", p_ip.ip.uint8[0], p_ip.ip.uint8[1], p_ip.ip.uint8[2], p_ip.ip.uint8[3],
+               ntohs(p_ip.port));
         printf("Timestamp: %llu\n", (long long unsigned int) dht->close_clientlist[i].ret_timestamp);
     }
 }
@@ -81,19 +83,20 @@ void print_friendlist(DHT *dht)
         printf("FRIEND %u\n", k);
         printf("ID: ");
 
-        for (j = 0; j < 32; j++) {
+        for (j = 0; j < CLIENT_ID_SIZE; j++) {
             printf("%c", dht->friends_list[k].client_id[j]);
         }
 
         p_ip = DHT_getfriendip(dht, dht->friends_list[k].client_id);
-        printf("\nIP: %u.%u.%u.%u:%u", p_ip.ip.c[0], p_ip.ip.c[1], p_ip.ip.c[2], p_ip.ip.c[3], ntohs(p_ip.port));
+        printf("\nIP: %u.%u.%u.%u:%u", p_ip.ip.uint8[0], p_ip.ip.uint8[1], p_ip.ip.uint8[2], p_ip.ip.uint8[3],
+               ntohs(p_ip.port));
 
         printf("\nCLIENTS IN LIST:\n\n");
 
-        for (i = 0; i < 4; i++) {
+        for (i = 0; i < MAX_FRIEND_CLIENTS; i++) {
             printf("ClientID: ");
 
-            for (j = 0; j < 32; j++) {
+            for (j = 0; j < CLIENT_ID_SIZE; j++) {
                 if (dht->friends_list[k].client_list[i].client_id[j] < 16)
                     printf("0");
 
@@ -101,11 +104,13 @@ void print_friendlist(DHT *dht)
             }
 
             p_ip = dht->friends_list[k].client_list[i].ip_port;
-            printf("\nIP: %u.%u.%u.%u:%u", p_ip.ip.c[0], p_ip.ip.c[1], p_ip.ip.c[2], p_ip.ip.c[3], ntohs(p_ip.port));
+            printf("\nIP: %u.%u.%u.%u:%u", p_ip.ip.uint8[0], p_ip.ip.uint8[1], p_ip.ip.uint8[2], p_ip.ip.uint8[3],
+                   ntohs(p_ip.port));
             printf("\nTimestamp: %llu", (long long unsigned int) dht->friends_list[k].client_list[i].timestamp);
             printf("\nLast pinged: %llu\n", (long long unsigned int) dht->friends_list[k].client_list[i].last_pinged);
             p_ip = dht->friends_list[k].client_list[i].ret_ip_port;
-            printf("ret IP: %u.%u.%u.%u:%u\n", p_ip.ip.c[0], p_ip.ip.c[1], p_ip.ip.c[2], p_ip.ip.c[3], ntohs(p_ip.port));
+            printf("ret IP: %u.%u.%u.%u:%u\n", p_ip.ip.uint8[0], p_ip.ip.uint8[1], p_ip.ip.uint8[2], p_ip.ip.uint8[3],
+                   ntohs(p_ip.port));
             printf("Timestamp: %llu\n", (long long unsigned int)dht->friends_list[k].client_list[i].ret_timestamp);
         }
     }
@@ -133,7 +138,7 @@ int main(int argc, char *argv[])
     /* initialize networking */
     /* bind to ip 0.0.0.0:PORT */
     IP ip;
-    ip.i = 0;
+    ip.uint32 = 0;
 
     DHT *dht = new_DHT(new_net_crypto(new_networking(ip, PORT)));
 
@@ -169,7 +174,7 @@ int main(int argc, char *argv[])
      * bootstrap_ip_port.ip.c[1] = 0;
      * bootstrap_ip_port.ip.c[2] = 0;
      * bootstrap_ip_port.ip.c[3] = 1; */
-    bootstrap_ip_port.ip.i = inet_addr(argv[1]);
+    bootstrap_ip_port.ip.uint32 = inet_addr(argv[1]);
     DHT_bootstrap(dht, bootstrap_ip_port, hex_string_to_bin(argv[3]));
 
     /*

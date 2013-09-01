@@ -28,42 +28,40 @@
 #include <stdint.h>
 #include <string.h> /* for memcpy() */
 
-unsigned char *hex_string_to_bin(char hex_string[]);
-
 /*********************Debugging Macros********************
  * wiki.tox.im/index.php/Internal_functions_and_data_structures#Debugging
  *********************************************************/
 #ifdef DEBUG
-    #include <assert.h>
-    #include <stdio.h>
-    #include <string.h>
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
 
-    #define DEBUG_PRINT(str, ...) do { \
+#define DEBUG_PRINT(str, ...) do { \
         char msg[1000]; \
         sprintf(msg, "%s(): line %d (file %s): %s%%c\n", __FUNCTION__, __LINE__, __FILE__, str); \
         fprintf(stderr, msg, __VA_ARGS__); \
     } while (0)
 
-    #define WARNING(...) do { \
+#define WARNING(...) do { \
         fprintf(stderr, "warning in "); \
         DEBUG_PRINT(__VA_ARGS__, ' '); \
     } while (0)
 
-    #define INFO(...) do { \
+#define INFO(...) do { \
         DEBUG_PRINT(__VA_ARGS__, ' '); \
     } while (0)
 
-    #undef ERROR
-    #define ERROR(exit_status, ...) do { \
+#undef ERROR
+#define ERROR(exit_status, ...) do { \
         fprintf(stderr, "error in "); \
         DEBUG_PRINT(__VA_ARGS__, ' '); \
         exit(exit_status); \
     } while (0)
 #else
-    #define WARNING(...)
-    #define INFO(...)
-    #undef ERROR
-    #define ERROR(...)
+#define WARNING(...)
+#define INFO(...)
+#undef ERROR
+#define ERROR(...)
 #endif // DEBUG
 
 /************************Linked List***********************
@@ -158,9 +156,16 @@ static inline void tox_array_delete(tox_array *arr)
 
 static inline void tox_array_push_ptr(tox_array *arr, uint8_t *item)
 {
-    arr->data = realloc(arr->data, arr->elem_size * (arr->len+1));
+    uint8_t *temp = realloc(arr->data, arr->elem_size * (arr->len + 1));
+
+    if (temp == NULL)
+        return 0;
+
+    arr->data = temp;
+
     if (item != NULL)
-        memcpy(arr->data + arr->elem_size*arr->len, item, arr->elem_size);
+        memcpy(arr->data + arr->elem_size * arr->len, item, arr->elem_size);
+
     arr->len++;
 }
 #define tox_array_push(arr, item) tox_array_push_ptr(arr, (uint8_t*)(&(item)))
@@ -171,9 +176,25 @@ static inline void tox_array_push_ptr(tox_array *arr, uint8_t *item)
 static inline void tox_array_pop(tox_array *arr, uint32_t num)
 {
     if (num == 0)
-        num = 1;
+        return;
+
+    if (num > arr->len)
+        return;
+
+    if (arr->len == num) {
+        free(arr->data);
+        arr->data = NULL;
+        arr->len = 0;
+        return;
+    }
+
+    uint8_t *temp = realloc(arr->data, arr->elem_size * (arr->len - num));
+
+    if (temp == NULL)
+        return;
+
     arr->len -= num;
-    arr->data = realloc(arr->data, arr->elem_size*arr->len);
+    arr->data = temp;
 }
 
 /* TODO: return ptr and do not take type */
@@ -182,6 +203,49 @@ static inline void tox_array_pop(tox_array *arr, uint32_t num)
 #define tox_array_for_each(arr, type, tmp_name) \
     type *tmp_name = &tox_array_get(arr, 0, type); uint32_t tmp_name ## _i = 0; \
     for (; tmp_name ## _i < (arr)->len; tmp_name = &tox_array_get(arr, ++ tmp_name ## _i, type))
+
+/****************************Algorithms***************************
+ * Macro/generic definitions for useful algorithms
+ *****************************************************************/
+
+/* Creates a new quick_sort implementation for arrays of the specified type.
+ * For a type T (eg: int, char), creates a function named T_quick_sort.
+ *
+ * Quick Sort: Complexity O(nlogn)
+ * arr   - the array to sort
+ * n     - the sort index (should be called with n = length(arr))
+ * cmpfn - a function that compares two values of type type. 
+ *         Must return -1, 0, 1 for a < b, a == b, and a > b respectively.
+ */
+/* Must be called in the header file. */ 
+#define declare_quick_sort(type) \
+void type##_quick_sort(type *arr, int n, int (*cmpfn)(type, type));
+
+/* Must be called in the C file. */
+#define make_quick_sort(type) \
+void type##_quick_sort(type *arr, int n, int (*cmpfn)(type, type)) \
+{ \
+    if ((n) < 2) \
+        return; \
+    type _p_ = (arr)[(n) / 2]; \
+    type *_l_ = (arr); \
+    type *_r_ = (arr) + n - 1; \
+    while (_l_ <= _r_) { \
+        if (cmpfn(*_l_, _p_) == -1) { \
+            ++_l_; \
+            continue; \
+        } \
+        if (cmpfn(*_r_, _p_) == 1) { \
+            --_r_; \
+            continue; \
+        } \
+        type _t_ = *_l_; \
+        *_l_++ = *_r_; \
+        *_r_-- = _t_; \
+    } \
+    type##_quick_sort((arr), _r_ - (arr) + 1, cmpfn); \
+    type##_quick_sort(_l_, (arr) + n - _l_, cmpfn); \
+}
 
 #endif // MISC_TOOLS_H
 
